@@ -1,6 +1,6 @@
 import '../models/product.dart';
 
-/// Единое состояние приложения (без провайдеров; достаточно для учебного проекта)
+/// Единое состояние приложения
 class WarehouseState {
   WarehouseState._();
   static final instance = WarehouseState._();
