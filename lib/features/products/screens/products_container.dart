@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/product.dart';
+
+// Экраны
 import 'home_screen.dart';
 import 'product_list_screen.dart';
 import 'add_product_screen.dart';
@@ -7,13 +9,10 @@ import 'edit_product_screen.dart';
 import 'coffee_gallery_screen.dart';
 import 'about_screen.dart';
 
-
-
+// Фиксированная вместимость склада
 const int kWarehouseCapacity = 50;
 
-enum _Screen { home, list, add, edit, gallery, about }
-
-/// Контейнер-фича: хранит состояние, управляет навигацией между экранами.
+/// Контейнер: единый источник данных + страничная навигация (Navigator)
 class ProductsContainer extends StatefulWidget {
   const ProductsContainer({super.key});
 
@@ -22,9 +21,7 @@ class ProductsContainer extends StatefulWidget {
 }
 
 class _ProductsContainerState extends State<ProductsContainer> {
-  _Screen _screen = _Screen.home;
-  String? _editingId;
-
+  final _navKey = GlobalKey<NavigatorState>();
 
   final List<Product> _items = [
     Product(
@@ -53,8 +50,7 @@ class _ProductsContainerState extends State<ProductsContainer> {
     ),
   ];
 
-  // --- CRUD и бизнес-логика ---
-
+  // ---------- Бизнес-операции ----------
   void _createProduct({
     required String name,
     required String sku,
@@ -71,7 +67,6 @@ class _ProductsContainerState extends State<ProductsContainer> {
     );
     setState(() => _items.add(p));
     _snack('Товар добавлен');
-    _showList();
   }
 
   void _updateProduct({
@@ -83,15 +78,15 @@ class _ProductsContainerState extends State<ProductsContainer> {
   }) {
     final idx = _items.indexWhere((e) => e.id == id);
     if (idx < 0) return;
-    final next = _items[idx].copyWith(
-      name: name.trim(),
-      sku: sku.trim(),
-      qty: qty.clamp(0, 1 << 31),
-      location: location.trim(),
-    );
-    setState(() => _items[idx] = next);
+    setState(() {
+      _items[idx] = _items[idx].copyWith(
+        name: name.trim(),
+        sku: sku.trim(),
+        qty: qty.clamp(0, 1 << 31),
+        location: location.trim(),
+      );
+    });
     _snack('Изменения сохранены');
-    _showList();
   }
 
   void _deleteProduct(String id) {
@@ -107,96 +102,85 @@ class _ProductsContainerState extends State<ProductsContainer> {
     setState(() => _items[idx] = curr.copyWith(qty: nextQty));
   }
 
-  // --- Навигация ---
-
-  void _showHome() => setState(() => _screen = _Screen.home);
-  void _showList() => setState(() => _screen = _Screen.list);
-  void _showAdd() => setState(() => _screen = _Screen.add);
-  void _showEdit(String id) => setState(() {
-        _editingId = id;
-        _screen = _Screen.edit;
-      });
-  void _showGallery() => setState(() => _screen = _Screen.gallery);
-  void _showAbout() => setState(() => _screen = _Screen.about);
-
-
-  // --- Вспомогательные ---
-
   void _snack(String msg) {
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    final ctx = _navKey.currentContext;
+    if (ctx == null) return;
+    ScaffoldMessenger.of(ctx).clearSnackBars();
+    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(msg)));
   }
+
+  // ---------- Горизонтальная навигация (замена текущей страницы) ----------
+  void _goHome()      => _navKey.currentState!.pushReplacement(_page(_buildHome()));
+  void _goList()      => _navKey.currentState!.pushReplacement(_page(_buildList()));
+  void _goGallery()   => _navKey.currentState!.pushReplacement(_page(_buildGallery()));
+  void _goAbout()     => _navKey.currentState!.pushReplacement(_page(_buildAbout()));
+
+  // ---------- Вертикальная навигация (stack) для Add/Edit ----------
+  Future<void> _openAdd() async {
+    await _navKey.currentState!.push(MaterialPageRoute(
+      builder: (_) => AddProductScreen(
+        onCancel: () => _navKey.currentState!.pop(),
+        onSave: ({required name, required sku, required qty, required location}) {
+          _createProduct(name: name, sku: sku, qty: qty, location: location);
+          _navKey.currentState!.pop(); // вернуться на список/домой
+        },
+      ),
+    ));
+  }
+
+  Future<void> _openEdit(String id) async {
+    final p = _items.firstWhere((e) => e.id == id);
+    await _navKey.currentState!.push(MaterialPageRoute(
+      builder: (_) => EditProductScreen(
+        initial: p,
+        onCancel: () => _navKey.currentState!.pop(),
+        onSave: (name, sku, qty, location) {
+          _updateProduct(id: p.id, name: name, sku: sku, qty: qty, location: location);
+          _navKey.currentState!.pop(); // вернуться на список
+        },
+      ),
+    ));
+  }
+
+  // ---------- Строители экранов (с проброшенными колбэками) ----------
+  Widget _buildHome() => HomeScreen(
+        capacity: kWarehouseCapacity,
+        usedPlaces: _items.length,
+        onOpenList: _goList,                 // горизонтальная
+        onOpenAdd: _openAdd,                 // ВЕРТИКАЛЬНАЯ
+        onOpenGallery: _goGallery,           // горизонтальная
+        onOpenAbout: _goAbout,               // горизонтальная
+      );
+
+  Widget _buildList() => ProductListScreen(
+        items: _items,
+        onBack: _goHome,                     // горизонтальная
+        onAddTap: _openAdd,                  // ВЕРТИКАЛЬНАЯ
+        onDelete: _deleteProduct,
+        onAdjustQty: _adjustQty,
+        onEdit: _openEdit,                   // ВЕРТИКАЛЬНАЯ
+      );
+
+  Widget _buildGallery() => CoffeeGalleryScreen(
+        onBack: _goHome,                     // горизонтальная
+      );
+
+  Widget _buildAbout() => AboutScreen(
+        onBack: _goHome,                     // горизонтальная
+      );
+
+  // ---------- Вспомогательное ----------
+  MaterialPageRoute _page(Widget child) =>
+      MaterialPageRoute(builder: (_) => child);
 
   @override
   Widget build(BuildContext context) {
-    late final Widget body;
-    late final String title;
-
-    switch (_screen) {
-      case _Screen.home:
-        title = 'Склад — домашний экран';
-        body = HomeScreen(
-          capacity: kWarehouseCapacity,
-          usedPlaces: _items.length,
-          onOpenList: _showList,
-          onOpenAdd: _showAdd,
-          onOpenGallery: _showGallery,
-          onOpenAbout: _showAbout,
-        );
-        break;
-      case _Screen.list:
-        title = 'Склад — перечень товаров';
-        body = ProductListScreen(
-          items: _items,
-          onBack: _showHome,
-          onAddTap: _showAdd,
-          onDelete: _deleteProduct,
-          onAdjustQty: _adjustQty,
-          onEdit: _showEdit,
-        );
-        break;
-      case _Screen.add:
-        title = 'Добавить товар';
-        body = AddProductScreen(
-          onCancel: _showList,
-          onSave: _createProduct,
-        );
-        break;
-      case _Screen.edit:
-        title = 'Редактировать товар';
-        final p = _items.firstWhere((e) => e.id == _editingId);
-        body = EditProductScreen(
-          initial: p,
-          onCancel: _showList,
-          onSave: (name, sku, qty, location) => _updateProduct(
-            id: p.id, name: name, sku: sku, qty: qty, location: location,
-          ),
-        );
-        break;
-      case _Screen.gallery:
-        title = 'Галерея кофе';
-        body = CoffeeGalleryScreen(
-          onBack: _showHome,
-        );
-        break;
-      case _Screen.about:
-        title = 'О приложении';
-        body = AboutScreen(
-          onBack: _showHome
-        );
-        break;
-    }
-
+    // Внешний Scaffold общий; заголовок можно сделать фиксированным
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-        leading: _screen == _Screen.home
-            ? null
-            : IconButton(onPressed: _showHome, icon: const Icon(Icons.home_outlined)),
-      ),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 200),
-        child: body,
+      appBar: AppBar(title: const Text('Склад — приложение')),
+      body: Navigator(
+        key: _navKey,
+        onGenerateRoute: (_) => _page(_buildHome()), // стартовая страница
       ),
     );
   }
