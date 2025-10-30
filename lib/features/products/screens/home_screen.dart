@@ -7,6 +7,7 @@ class HomeScreen extends StatelessWidget {
   final VoidCallback onOpenList;
   final VoidCallback onOpenAdd;
   final VoidCallback onOpenGallery;
+  final VoidCallback onOpenAbout;
 
   const HomeScreen({
     super.key,
@@ -15,6 +16,7 @@ class HomeScreen extends StatelessWidget {
     required this.onOpenList,
     required this.onOpenAdd,
     required this.onOpenGallery,
+    required this.onOpenAbout,
   });
 
   @override
@@ -82,6 +84,13 @@ class HomeScreen extends StatelessWidget {
                   onPressed: onOpenGallery,
                   icon: const Icon(Icons.local_cafe_outlined),
                   label: const Text('Галерея кофе'),
+                ),
+              ),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onOpenAbout,
+                  icon: const Icon(Icons.info_outline),
+                  label: const Text('О приложении'),
                 ),
               ),
             ],

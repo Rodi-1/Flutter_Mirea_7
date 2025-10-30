@@ -5,12 +5,13 @@ import 'product_list_screen.dart';
 import 'add_product_screen.dart';
 import 'edit_product_screen.dart';
 import 'coffee_gallery_screen.dart';
+import 'about_screen.dart';
 
 
 
 const int kWarehouseCapacity = 50;
 
-enum _Screen { home, list, add, edit, gallery }
+enum _Screen { home, list, add, edit, gallery, about }
 
 /// Контейнер-фича: хранит состояние, управляет навигацией между экранами.
 class ProductsContainer extends StatefulWidget {
@@ -116,6 +117,7 @@ class _ProductsContainerState extends State<ProductsContainer> {
         _screen = _Screen.edit;
       });
   void _showGallery() => setState(() => _screen = _Screen.gallery);
+  void _showAbout() => setState(() => _screen = _Screen.about);
 
 
   // --- Вспомогательные ---
@@ -139,6 +141,7 @@ class _ProductsContainerState extends State<ProductsContainer> {
           onOpenList: _showList,
           onOpenAdd: _showAdd,
           onOpenGallery: _showGallery,
+          onOpenAbout: _showAbout,
         );
         break;
       case _Screen.list:
@@ -174,6 +177,12 @@ class _ProductsContainerState extends State<ProductsContainer> {
         title = 'Галерея кофе';
         body = CoffeeGalleryScreen(
           onBack: _showHome,
+        );
+        break;
+      case _Screen.about:
+        title = 'О приложении';
+        body = AboutScreen(
+          onBack: _showHome
         );
         break;
     }
