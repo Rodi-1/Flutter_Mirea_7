@@ -1,22 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/pie_capacity.dart';
 
 class HomeScreen extends StatelessWidget {
   final int capacity;
   final int usedPlaces;
-  final VoidCallback onOpenList;
-  final VoidCallback onOpenAdd;
-  final VoidCallback onOpenGallery;
-  final VoidCallback onOpenAbout;
 
   const HomeScreen({
     super.key,
     required this.capacity,
     required this.usedPlaces,
-    required this.onOpenList,
-    required this.onOpenAdd,
-    required this.onOpenGallery,
-    required this.onOpenAbout,
   });
 
   @override
@@ -30,34 +23,28 @@ class HomeScreen extends StatelessWidget {
         children: [
           Text('Состояние склада', style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          height: 180,
-                          child: PieCapacity(
-                            used: clampedUsed,
-                            capacity: capacity == 0 ? 1 : capacity,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          overfilled
-                              ? 'Позиции: $usedPlaces / $capacity (переполнение)'
-                              : 'Позиции: $usedPlaces / $capacity',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ],
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 180,
+                    child: PieCapacity(
+                      used: clampedUsed,
+                      capacity: capacity == 0 ? 1 : capacity,
                     ),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  Text(
+                    overfilled
+                        ? 'Позиции: $usedPlaces / $capacity (переполнение)'
+                        : 'Позиции: $usedPlaces / $capacity',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
           const SizedBox(height: 16),
           Text('Действия', style: Theme.of(context).textTheme.titleSmall),
@@ -66,7 +53,7 @@ class HomeScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: onOpenList,
+                  onPressed: () => context.go('/list'), // горизонтальная
                   icon: const Icon(Icons.inventory_2_outlined),
                   label: const Text('Список товаров'),
                 ),
@@ -74,28 +61,37 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: onOpenAdd,
+                  onPressed: () => context.push('/add'), // ВЕРТИКАЛЬНАЯ
                   icon: const Icon(Icons.add),
                   label: const Text('Добавить товар'),
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: onOpenGallery,
+                  onPressed: () => context.go('/gallery'), // горизонтальная
                   icon: const Icon(Icons.local_cafe_outlined),
                   label: const Text('Галерея кофе'),
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: onOpenAbout,
+                  onPressed: () => context.go('/about'), // горизонтальная
                   icon: const Icon(Icons.info_outline),
                   label: const Text('О приложении'),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
         ],
       ),
     );

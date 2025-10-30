@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-/// Экран-галерея: 5 случайных картинок кофе с кэшированием (офлайн поддержка).
 class CoffeeGalleryScreen extends StatefulWidget {
-  final VoidCallback onBack;
-
-  const CoffeeGalleryScreen({super.key, required this.onBack});
+  const CoffeeGalleryScreen({super.key});
 
   @override
   State<CoffeeGalleryScreen> createState() => _CoffeeGalleryScreenState();
@@ -22,10 +20,7 @@ class _CoffeeGalleryScreenState extends State<CoffeeGalleryScreen> {
 
   void _generateUrls() {
     final ts = DateTime.now().microsecondsSinceEpoch;
-    _urls = List.generate(
-      5,
-      (i) => 'https://coffee.alexflipnote.dev/random?cb=${ts + i}',
-    );
+    _urls = List.generate(5, (i) => 'https://coffee.alexflipnote.dev/random?cb=${ts + i}');
     setState(() {});
   }
 
@@ -38,9 +33,9 @@ class _CoffeeGalleryScreenState extends State<CoffeeGalleryScreen> {
           Row(
             children: [
               OutlinedButton.icon(
-                onPressed: widget.onBack,
-                icon: const Icon(Icons.arrow_back),
-                label: const Text('Назад'),
+                onPressed: () => context.go('/'),
+                icon: const Icon(Icons.home_outlined),
+                label: const Text('Домой'),
               ),
               const Spacer(),
               FilledButton.icon(
@@ -54,9 +49,7 @@ class _CoffeeGalleryScreenState extends State<CoffeeGalleryScreen> {
           Expanded(
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,        // 2 колонки
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
+                crossAxisCount: 2, mainAxisSpacing: 8, crossAxisSpacing: 8,
               ),
               itemCount: _urls.length,
               itemBuilder: (context, index) {
@@ -67,12 +60,8 @@ class _CoffeeGalleryScreenState extends State<CoffeeGalleryScreen> {
                     imageUrl: url,
                     fit: BoxFit.cover,
                     placeholder: (c, _) => const Center(child: CircularProgressIndicator()),
-                    errorWidget: (c, _, __) => Container(
-                      color: Colors.black12,
-                      child: const Center(
-                        child: Icon(Icons.wifi_off, size: 32),
-                      ),
-                    ),
+                    errorWidget: (c, _, __) =>
+                        const Center(child: Icon(Icons.wifi_off, size: 32)),
                   ),
                 );
               },

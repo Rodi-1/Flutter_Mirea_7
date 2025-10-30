@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../models/product.dart';
+import '../state/warehouse_state.dart';
 
 class EditProductScreen extends StatefulWidget {
+  final WarehouseState state;
   final Product initial;
-  final VoidCallback onCancel;
-  final void Function(String name, String sku, int qty, String location) onSave;
 
   const EditProductScreen({
     super.key,
+    required this.state,
     required this.initial,
-    required this.onCancel,
-    required this.onSave,
   });
 
   @override
@@ -35,10 +35,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
   @override
   void dispose() {
-    _name.dispose();
-    _sku.dispose();
-    _qty.dispose();
-    _loc.dispose();
+    _name.dispose(); _sku.dispose(); _qty.dispose(); _loc.dispose();
     super.dispose();
   }
 
@@ -46,8 +43,17 @@ class _EditProductScreenState extends State<EditProductScreen> {
 
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    final qtyParsed = int.tryParse(_qty.text.trim()) ?? 0;
-    widget.onSave(_name.text.trim(), _sku.text.trim(), qtyParsed, _loc.text.trim());
+    widget.state.updateProduct(
+      id: widget.initial.id,
+      name: _name.text.trim(),
+      sku: _sku.text.trim(),
+      qty: int.tryParse(_qty.text.trim()) ?? 0,
+      location: _loc.text.trim(),
+    );
+    context.pop(); // вернуться на список
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Изменения сохранены')),
+    );
   }
 
   @override
@@ -86,7 +92,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
             Row(
               children: [
                 OutlinedButton.icon(
-                  onPressed: widget.onCancel,
+                  onPressed: () => context.pop(),
                   icon: const Icon(Icons.close),
                   label: const Text('Отмена'),
                 ),

@@ -1,19 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../state/warehouse_state.dart';
 
 class AddProductScreen extends StatefulWidget {
-  final VoidCallback onCancel;
-  final void Function({
-    required String name,
-    required String sku,
-    required int qty,
-    required String location,
-  }) onSave;
-
-  const AddProductScreen({
-    super.key,
-    required this.onCancel,
-    required this.onSave,
-  });
+  final WarehouseState state;
+  const AddProductScreen({super.key, required this.state});
 
   @override
   State<AddProductScreen> createState() => _AddProductScreenState();
@@ -28,10 +19,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   @override
   void dispose() {
-    _name.dispose();
-    _sku.dispose();
-    _qty.dispose();
-    _loc.dispose();
+    _name.dispose(); _sku.dispose(); _qty.dispose(); _loc.dispose();
     super.dispose();
   }
 
@@ -39,12 +27,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   void _submit() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    final qtyParsed = int.tryParse(_qty.text.trim()) ?? 0;
-    widget.onSave(
+    widget.state.createProduct(
       name: _name.text.trim(),
       sku: _sku.text.trim(),
-      qty: qtyParsed,
+      qty: int.tryParse(_qty.text.trim()) ?? 0,
       location: _loc.text.trim(),
+    );
+    context.pop(); // вернуться на предыдущий экран (список/домой)
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Товар добавлен')),
     );
   }
 
@@ -84,7 +75,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             Row(
               children: [
                 OutlinedButton.icon(
-                  onPressed: widget.onCancel,
+                  onPressed: () => context.pop(),
                   icon: const Icon(Icons.close),
                   label: const Text('Отмена'),
                 ),

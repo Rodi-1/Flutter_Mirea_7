@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class AboutScreen extends StatelessWidget {
-  final VoidCallback onBack;
-
-  const AboutScreen({super.key, required this.onBack});
+  const AboutScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -12,9 +11,9 @@ class AboutScreen extends StatelessWidget {
       child: ListView(
         children: [
           OutlinedButton.icon(
-            onPressed: onBack,
-            icon: const Icon(Icons.arrow_back),
-            label: const Text('Назад'),
+            onPressed: () => context.go('/'),
+            icon: const Icon(Icons.home_outlined),
+            label: const Text('Домой'),
           ),
           const SizedBox(height: 12),
           Text('О приложении', style: Theme.of(context).textTheme.headlineSmall),
@@ -27,8 +26,7 @@ class AboutScreen extends StatelessWidget {
             '• домашний экран с диаграммой заполняемости;\n'
             '• экран галереи с сетевыми изображениями (кэширование).\n\n'
             'Версия: 1.0.0 (демо)\n'
-            'Автор: Сортов Семён студент группы ИКБО-12-22\n',
-            style: Theme.of(context).textTheme.bodyMedium,
+            'Автор: студент группы …\n',
           ),
         ],
       ),

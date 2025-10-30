@@ -1,28 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../models/product.dart';
+import '../state/warehouse_state.dart';
 import '../widgets/product_table.dart';
 
-/// Экран списка: удаление, изменение количества, переход к редактированию
-class ProductListScreen extends StatelessWidget {
-  final List<Product> items;
-  final VoidCallback onBack;
-  final VoidCallback onAddTap;
-  final void Function(String id) onDelete;
-  final void Function(String id, int delta) onAdjustQty;
-  final void Function(String id) onEdit;
+class ProductListScreen extends StatefulWidget {
+  final WarehouseState state;
+  const ProductListScreen({super.key, required this.state});
 
-  const ProductListScreen({
-    super.key,
-    required this.items,
-    required this.onBack,
-    required this.onAddTap,
-    required this.onDelete,
-    required this.onAdjustQty,
-    required this.onEdit,
-  });
+  @override
+  State<ProductListScreen> createState() => _ProductListScreenState();
+}
+
+class _ProductListScreenState extends State<ProductListScreen> {
+  WarehouseState get ws => widget.state;
+
+  void _onDelete(String id) {
+    setState(() => ws.deleteProduct(id));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Товар удалён')),
+    );
+  }
+
+  void _onAdjustQty(String id, int delta) {
+    setState(() => ws.adjustQty(id, delta));
+  }
+
+  void _onEdit(String id) {
+    context.push('/edit/$id'); // ВЕРТИКАЛЬНАЯ
+  }
 
   @override
   Widget build(BuildContext context) {
+    final List<Product> items = ws.items;
+
     return Padding(
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -30,13 +41,13 @@ class ProductListScreen extends StatelessWidget {
           Row(
             children: [
               OutlinedButton.icon(
-                onPressed: onBack,
-                icon: const Icon(Icons.arrow_back),
+                onPressed: () => context.go('/'), // горизонтальная
+                icon: const Icon(Icons.home_outlined),
                 label: const Text('Домой'),
               ),
               const Spacer(),
               FilledButton.icon(
-                onPressed: onAddTap,
+                onPressed: () => context.push('/add'), // ВЕРТИКАЛЬНАЯ
                 icon: const Icon(Icons.add),
                 label: const Text('Новая позиция'),
               ),
@@ -46,9 +57,9 @@ class ProductListScreen extends StatelessWidget {
           Expanded(
             child: ProductTable(
               items: items,
-              onDelete: onDelete,
-              onAdjustQty: onAdjustQty,
-              onEdit: onEdit,
+              onDelete: _onDelete,
+              onAdjustQty: _onAdjustQty,
+              onEdit: _onEdit,
             ),
           ),
         ],
